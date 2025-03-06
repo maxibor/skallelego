@@ -7,7 +7,7 @@ Write scikit-allel objects to disk as VCF(.gz)
 ## Installation
 
 ```bash
-pip install git+https
+pip install git+https://github.com/maxibor/skallelego.git
 ```
 
 ## Quick start
