@@ -31,7 +31,7 @@ def ld_prune(gn, size=500, step=200, threshold=.1, n_iter=2):
         kept_pos.append(_[0])
     return gn, kept_pos
 
-def variant_filter(gt_in, chrom, pos, ref, alt, qual, is_snp):
+def variant_filter(gt_in, chrom, pos, ref, alt, qual, is_snp, ld_size=500, ld_step=200, ld_threshold=0.1, ld_iter=2):
     """
     Filter variants to only keep non singleton bi-allelic variants, free from LD
     Args:
@@ -42,6 +42,10 @@ def variant_filter(gt_in, chrom, pos, ref, alt, qual, is_snp):
         alt(np.array): array of alternate alleles of shape (V, N) (N being the max number of alternate allels)
         qual(np.array): array of variant qualities of shape (V,)
         is_snp(np.array): array of binary values for each variant, of shape (V,)
+        ld_size(int): Window size (number of variants).
+        ld_step(int): Number of variants to advance to the next window.
+        ld_threshold(float): Maximum value of r**2 to include variants.
+        ld_iter(int): number of iterations
     
     Returns:
         np.array: filtered chromosome array, of shape (Vf, )
@@ -56,12 +60,22 @@ def variant_filter(gt_in, chrom, pos, ref, alt, qual, is_snp):
     ac = gt.count_alleles()
 
     # Apply filters
+    print(f"{gt.shape[0]} variants - {gt.shape[1]} samples")
     biallelic_mask = ac.is_biallelic()  # Only bi-allelic variants
     non_singleton_mask = ~ac.is_singleton(0) & ~ac.is_singleton(1)  # Exclude singletons
     snp_mask = is_snp  # Only SNPs
+    final_mask = snp_mask & biallelic_mask & non_singleton_mask
+    print(f"{snp_mask.sum()} SNP are variants")
+    print(f"{biallelic_mask.sum()} variants are bi-allelic")
+    print(f"{non_singleton_mask.sum()} variants are not singleton")
+    nb_variants_remain = final_mask.sum()
+    perc_variant_remain = (nb_variants_remain / gt.shape[0])*100
+    print(f"Before LD filtering, {round(perc_variant_remain, 2)}% ({nb_variants_remain}) variants remain")
+
+
 
     # Combined mask: SNPs, Bi-allelic, and Non-Singleton
-    final_mask = snp_mask & biallelic_mask & non_singleton_mask
+    
 
     # Filter variants based on the mask
     filtered_chrom = chrom[final_mask]
@@ -72,7 +86,7 @@ def variant_filter(gt_in, chrom, pos, ref, alt, qual, is_snp):
     filtered_gt = gt[final_mask]
 
     # Perform LD pruning
-    pruned_gt, non_ld_mask = ld_prune(filtered_gt.to_n_alt(), size=50, step=5, threshold=0.01, n_iter=2)
+    pruned_gt, non_ld_mask = ld_prune(filtered_gt.to_n_alt(), size=ld_size, step=ld_step, threshold=ld_threshold, n_iter=ld_iter)
 
     # Apply LD mask to variants
     for m in non_ld_mask:
@@ -83,7 +97,9 @@ def variant_filter(gt_in, chrom, pos, ref, alt, qual, is_snp):
         filtered_qual = filtered_qual[m]
         filtered_gt = filtered_gt[m]
 
-        return filtered_chrom, filtered_pos, filtered_ref, filtered_alt, filtered_qual, filtered_gt
+    print(f"After LD filtering {filtered_gt.shape[0]} variants remain")
+
+    return filtered_chrom, filtered_pos, filtered_ref, filtered_alt, filtered_qual, filtered_gt
 
 
 
