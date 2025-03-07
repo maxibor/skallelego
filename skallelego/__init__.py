@@ -1,4 +1,6 @@
 import vcfpy
+import allel
+import numpy as np
 
 def ld_prune(gn, size=500, step=200, threshold=.1, n_iter=2):
     """
@@ -85,7 +87,7 @@ def variant_filter(gt_in, chrom, pos, ref, alt, qual, is_snp):
 
 
 
-def vcf2disk(samples, chrom, pos, ref, alt, qual, gt, output):
+def write_vcf(samples, chrom, pos, ref, alt, qual, gt, output):
     """
     Write VCF data to disk. 
     This function currently only supports writing bi-allelic SNVs to VCF files.

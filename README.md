@@ -13,43 +13,63 @@ pip install git+https://github.com/maxibor/skallelego.git
 ## Quick start
 
 ```python
-import scikit-allel
+import allel
 import skallelego
 
 # Read input VCF with scikit-allel
-callset = allel.read_vcf('example.vcf')
+
+fields = [
+    'samples', 
+    'calldata/GT', 
+    'variants/ALT', 
+    'variants/CHROM', 
+    'variants/ID', 
+    'variants/POS', 
+    'variants/QUAL', 
+    'variants/REF',
+    'variants/is_snp'
+]
+
+callset = allel.read_vcf('tests/data/Pundamilia.RAD.vcf.gz', fields=fields)
 is_snp = callset['variants/is_snp'][:] #np.ndarray
 ref = callset['variants/REF'][:].astype('U13') #np.ndarray
 alt = callset['variants/ALT'][:].astype('U13') #list
-qual = callset['variants/QUAL'][:] if "QUAL" in callset['variants'] else None  #np.ndarray
+qual = callset['variants/QUAL'][:]
 gt = allel.GenotypeArray(callset['calldata/GT'][:])
 samples = callset['samples'][:].astype('U13')
 pos = callset['variants/POS'][:]
 chrom = callset['variants/CHROM'][:].astype('U13')
 
-# Do some filtering/variants operations
-# ...
-
-# Write objects to disk
-skallelego.vcf2disk(
-    samples,
+chrom_flt, pos_flt, ref_flt, alt_flt, qual_flt, gt_flt = skallelego.variant_filter(
+    gt,
     chrom,
     pos,
     ref,
     alt,
     qual,
-    gt,
-    "output.vcf.gz"
+    is_snp
+)
+
+# Write objects to disk
+skallelego.write_vcf(
+    samples,
+    chrom_flt,
+    pos_flt,
+    ref_flt,
+    alt_flt,
+    qual_flt,
+    gt_flt,
+    "output.vcf"
 )
 ```
 
 ## Documentation
 
 ```python
->>>help(skallelego.vcf2disk)
-Help on function vcf2disk in module skallelego:
+>>>help(skallelego.write_vcf)
+Help on function write_vcf in module skallelego:
 
-vcf2disk(samples, chrom, pos, ref, alt, qual, gt, output)
+write_vcf(samples, chrom, pos, ref, alt, qual, gt, output)
     Write VCF data to disk. 
     This function currently only supports writing bi-allelic SNVs to VCF files.
     
@@ -69,7 +89,7 @@ vcf2disk(samples, chrom, pos, ref, alt, qual, gt, output)
 >>> help(skallelego.variant_filter)
 Help on function variant_filter in module skallelego:
 
-variant_filter(gt_in, chrom, pos, ref, alt, qual)
+variant_filter(gt_in, chrom, pos, ref, alt, qual, is_snp)
     Filter variants to only keep non singleton bi-allelic variants, free from LD
     Args:
         gt_in(allel.model.ndarray.GenotypeArray): scikit-allel genotype array of shape (V,S,P), P being the ploidy
@@ -78,7 +98,8 @@ variant_filter(gt_in, chrom, pos, ref, alt, qual)
         ref(np.array): array of reference alleles of shape (V,)
         alt(np.array): array of alternate alleles of shape (V, N) (N being the max number of alternate allels)
         qual(np.array): array of variant qualities of shape (V,)
-    
+        is_snp(np.array): array of binary values for each variant, of shape (V,)
+
     Returns:
         np.array: filtered chromosome array, of shape (Vf, )
         np.array: filtered position array, of shape (Vf, )
