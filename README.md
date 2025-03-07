@@ -18,14 +18,14 @@ import skallelego
 
 # Read input VCF with scikit-allel
 callset = allel.read_vcf('example.vcf')
-is_snp = f['variants/is_snp'][:] #np.ndarray
-ref = f['variants/REF'][:].astype('U13') #np.ndarray
-alt = f['variants/ALT'][:].astype('U13') #list
-qual = f['variants/QUAL'][:] if "QUAL" in f['variants'] else None  #np.ndarray
-gt = allel.GenotypeArray(f['calldata/GT'][:])
-samples = f['samples'][:].astype('U13')
-pos = f['variants/POS'][:]
-chrom = f['variants/CHROM'][:].astype('U13')
+is_snp = callset['variants/is_snp'][:] #np.ndarray
+ref = callset['variants/REF'][:].astype('U13') #np.ndarray
+alt = callset['variants/ALT'][:].astype('U13') #list
+qual = callset['variants/QUAL'][:] if "QUAL" in callset['variants'] else None  #np.ndarray
+gt = allel.GenotypeArray(callset['calldata/GT'][:])
+samples = callset['samples'][:].astype('U13')
+pos = callset['variants/POS'][:]
+chrom = callset['variants/CHROM'][:].astype('U13')
 
 # Do some filtering/variants operations
 # ...
