@@ -29,7 +29,7 @@ def ld_prune(gn, size=500, step=200, threshold=.1, n_iter=2):
         kept_pos.append(_[0])
     return gn, kept_pos
 
-def variant_filter(gt_in, chrom, pos, ref, alt, qual):
+def variant_filter(gt_in, chrom, pos, ref, alt, qual, is_snp):
     """
     Filter variants to only keep non singleton bi-allelic variants, free from LD
     Args:
@@ -39,6 +39,7 @@ def variant_filter(gt_in, chrom, pos, ref, alt, qual):
         ref(np.array): array of reference alleles of shape (V,)
         alt(np.array): array of alternate alleles of shape (V, N) (N being the max number of alternate allels)
         qual(np.array): array of variant qualities of shape (V,)
+        is_snp(np.array): array of binary values for each variant, of shape (V,)
     
     Returns:
         np.array: filtered chromosome array, of shape (Vf, )
@@ -50,6 +51,7 @@ def variant_filter(gt_in, chrom, pos, ref, alt, qual):
     """
     
     gt = gt_in.copy()
+    gt = gt.compress(is_snp, axis=0)
     ac = gt.count_alleles()
 
     # Apply filters
