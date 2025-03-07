@@ -51,7 +51,6 @@ def variant_filter(gt_in, chrom, pos, ref, alt, qual, is_snp):
     """
     
     gt = gt_in.copy()
-    gt = gt.compress(is_snp, axis=0)
     ac = gt.count_alleles()
 
     # Apply filters
