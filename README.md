@@ -85,4 +85,5 @@ variant_filter(gt_in, chrom, pos, ref, alt, qual)
         np.array: filtered reference allele array, of shape (Vf, )
         np.array: filtered alternate allele array, of shape (Vf, 2)
         np.array: filtered variant quality array of shape (Vf, )
+        allel.model.ndarray.GenotypeArray: filtered genotype array of shape (Vf, S, 2)
 ```
