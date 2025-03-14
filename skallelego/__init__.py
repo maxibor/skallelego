@@ -1,6 +1,7 @@
 import vcfpy
 import allel
 import numpy as np
+from tqdm import tqdm
 
 def ld_prune(gn, size=500, step=200, threshold=.1, n_iter=2):
     """
@@ -121,6 +122,8 @@ def write_vcf(samples, chrom, pos, ref, alt, qual, gt, output):
     Returns:
         None
     """
+
+    print(f"Writing VCF to disk as {output}")
     
     # Define VCF Header
     s = vcfpy.header.SamplesInfos(samples)
@@ -132,7 +135,7 @@ def write_vcf(samples, chrom, pos, ref, alt, qual, gt, output):
     header.add_filter_line({'ID': 'PASS', 'Description': 'All filters passed'})
     header.add_format_line({'ID': 'GT', 'Number': '1', 'Type': 'String', 'Description': 'Genotype'})
     with vcfpy.Writer.from_path(output, header) as writer:
-        for i, c in enumerate(chrom):
+        for i, c in tqdm(enumerate(chrom), total=len(chrom)):
             alt_alleles = [vcfpy.Substitution("SNV", a) for a in alt[i] if a != ""]
 
             calls = []

@@ -5,11 +5,11 @@ import os
 # Read input VCF with scikit-allel
 
 test_dir = os.path.join(os.path.dirname(__file__))
-test_vcf = os.path.join(test_dir, data, "Pundamilia.RAD.vcf.gz")
-test_output = os.path.join(test_dir, data, "output.vcf.gz")
+test_vcf = os.path.join(test_dir, "data", "Pundamilia.RAD.vcf.gz")
+test_output = os.path.join(test_dir, "data", "output.vcf.gz")
 
-def test_variant_filter():
-    fields = [
+
+fields = [
     'samples', 
     'calldata/GT', 
     'variants/ALT', 
@@ -21,33 +21,26 @@ def test_variant_filter():
     'variants/is_snp'
 ]
 
-    allset = allel.read_vcf('tests/data/Pundamilia.RAD.vcf.gz', fields=fields)
-    is_snp = callset['variants/is_snp'][:] #np.ndarray
-    ref = callset['variants/REF'][:].astype('U13') #np.ndarray
-    alt = callset['variants/ALT'][:].astype('U13') #list
-    qual = callset['variants/QUAL'][:]
-    gt = allel.GenotypeArray(callset['calldata/GT'][:])
-    samples = callset['samples'][:].astype('U13')
-    pos = callset['variants/POS'][:]
-    chrom = callset['variants/CHROM'][:].astype('U13')
+callset = allel.read_vcf(test_vcf, fields=fields)
+is_snp = callset['variants/is_snp'][:] #np.ndarray
+ref = callset['variants/REF'][:].astype('U13') #np.ndarray
+alt = callset['variants/ALT'][:].astype('U13') #list
+qual = callset['variants/QUAL'][:]
+gt = allel.GenotypeArray(callset['calldata/GT'][:])
+samples = callset['samples'][:].astype('U13')
+pos = callset['variants/POS'][:]
+chrom = callset['variants/CHROM'][:].astype('U13')
 
-    chrom_flt, pos_flt, ref_flt, alt_flt, qual_flt, gt_flt = skallelego.variant_filter(
-        gt,
-        chrom,
-        pos,
-        ref,
-        alt,
-        qual,
-        is_snp,
-        ld_threshold=0.2
-    )
-
-def test_cleanup():
-    rmtree(db_dir)
-
-
-
-c
+chrom_flt, pos_flt, ref_flt, alt_flt, qual_flt, gt_flt = skallelego.variant_filter(
+    gt,
+    chrom,
+    pos,
+    ref,
+    alt,
+    qual,
+    is_snp,
+    ld_threshold=0.2
+)
 
 # Write objects to disk
 skallelego.write_vcf(
@@ -58,5 +51,5 @@ skallelego.write_vcf(
     alt_flt,
     qual_flt,
     gt_flt,
-    "output.vcf"
+    os.path.join(test_dir, "output.vcf.gz")
 )
