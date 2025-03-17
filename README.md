@@ -1,3 +1,5 @@
+[![CI](https://github.com/maxibor/skallelego/actions/workflows/ci.yml/badge.svg)](https://github.com/maxibor/skallelego/actions/workflows/ci.yml)
+
 # skallelego
 
 **Scikit-allel lego**: a few utility functions to complement [scikit-allel](https://github.com/cggh/scikit-allel)
@@ -89,7 +91,7 @@ write_vcf(samples, chrom, pos, ref, alt, qual, gt, output)
 >>> help(skallelego.variant_filter)
 Help on function variant_filter in module skallelego:
 
-variant_filter(gt_in, chrom, pos, ref, alt, qual, is_snp)
+variant_filter(gt_in, chrom, pos, ref, alt, qual, is_snp, core_variants=True, ld_size=500, ld_step=200, ld_threshold=0.1, ld_iter=2)
     Filter variants to only keep non singleton bi-allelic variants, free from LD
     Args:
         gt_in(allel.model.ndarray.GenotypeArray): scikit-allel genotype array of shape (V,S,P), P being the ploidy
@@ -99,7 +101,12 @@ variant_filter(gt_in, chrom, pos, ref, alt, qual, is_snp)
         alt(np.array): array of alternate alleles of shape (V, N) (N being the max number of alternate allels)
         qual(np.array): array of variant qualities of shape (V,)
         is_snp(np.array): array of binary values for each variant, of shape (V,)
-
+        core_variants(bool): If True, only keep variants present in all samples
+        ld_size(int): Window size (number of variants).
+        ld_step(int): Number of variants to advance to the next window.
+        ld_threshold(float): Maximum value of r**2 to include variants.
+        ld_iter(int): number of iterations
+    
     Returns:
         np.array: filtered chromosome array, of shape (Vf, )
         np.array: filtered position array, of shape (Vf, )
@@ -107,4 +114,11 @@ variant_filter(gt_in, chrom, pos, ref, alt, qual, is_snp)
         np.array: filtered alternate allele array, of shape (Vf, 2)
         np.array: filtered variant quality array of shape (Vf, )
         allel.model.ndarray.GenotypeArray: filtered genotype array of shape (Vf, S, 2)
+```
+
+## Test
+
+```bash
+poetry install
+poetry run pytest
 ```
