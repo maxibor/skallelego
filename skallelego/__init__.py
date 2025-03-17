@@ -3,6 +3,12 @@ import allel
 import numpy as np
 from tqdm import tqdm
 
+def get_core_variant(gt):
+    alt = gt.to_n_alt(fill=-127)
+    alt = np.where(alt == -127, np.nan, alt)
+    core_variants = ~np.isnan(alt)
+    return core_variants.sum(axis=1) == core_variants.shape[1]
+
 def ld_prune(gn, size=500, step=200, threshold=.1, n_iter=2):
     """
     Prune variant in Linkage Desequilibrium
@@ -32,7 +38,7 @@ def ld_prune(gn, size=500, step=200, threshold=.1, n_iter=2):
         kept_pos.append(_[0])
     return gn, kept_pos
 
-def variant_filter(gt_in, chrom, pos, ref, alt, qual, is_snp, ld_size=500, ld_step=200, ld_threshold=0.1, ld_iter=2):
+def variant_filter(gt_in, chrom, pos, ref, alt, qual, is_snp, core_variants=True, ld_size=500, ld_step=200, ld_threshold=0.1, ld_iter=2):
     """
     Filter variants to only keep non singleton bi-allelic variants, free from LD
     Args:
@@ -43,6 +49,7 @@ def variant_filter(gt_in, chrom, pos, ref, alt, qual, is_snp, ld_size=500, ld_st
         alt(np.array): array of alternate alleles of shape (V, N) (N being the max number of alternate allels)
         qual(np.array): array of variant qualities of shape (V,)
         is_snp(np.array): array of binary values for each variant, of shape (V,)
+        core_variants(bool): If True, only keep variants present in all samples
         ld_size(int): Window size (number of variants).
         ld_step(int): Number of variants to advance to the next window.
         ld_threshold(float): Maximum value of r**2 to include variants.
@@ -65,10 +72,13 @@ def variant_filter(gt_in, chrom, pos, ref, alt, qual, is_snp, ld_size=500, ld_st
     biallelic_mask = ac.is_biallelic()  # Only bi-allelic variants
     non_singleton_mask = ~ac.is_singleton(0) & ~ac.is_singleton(1)  # Exclude singletons
     snp_mask = is_snp  # Only SNPs
-    final_mask = snp_mask & biallelic_mask & non_singleton_mask
+    core_filt = get_core_variant(gt) if core_variants else np.ones(gt.shape[0], dtype=bool)
     print(f"{snp_mask.sum()} SNP are variants")
     print(f"{biallelic_mask.sum()} variants are bi-allelic")
     print(f"{non_singleton_mask.sum()} variants are not singleton")
+    if core_variants:
+        print(f"{core_filt.sum()} variants are present in all samples")
+    final_mask = snp_mask & biallelic_mask & non_singleton_mask & core_filt
     nb_variants_remain = final_mask.sum()
     perc_variant_remain = (nb_variants_remain / gt.shape[0])*100
     print(f"Before LD filtering, {round(perc_variant_remain, 2)}% ({nb_variants_remain}) variants remain")
@@ -158,3 +168,4 @@ def write_vcf(samples, chrom, pos, ref, alt, qual, gt, output):
 
             # Write the record
             writer.write_record(record)
+    return True
